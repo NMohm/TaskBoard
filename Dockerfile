@@ -1,16 +1,15 @@
 # -------------------
 # Build Stage 1 (npm)
 # -------------------
-FROM node:alpine AS appbuild
+FROM node:12-alpine AS appbuild
 
-RUN apk add --update --no-cache p7zip
-
+ENV PYTHONBUFFERED=1
+RUN apk add --update --no-cache p7zip chromium python2 make g++ && ln -sf python2 /usr/bin/python
 WORKDIR /usr/src/app
 
-COPY ./package.json ./
-RUN npm install
 
-COPY . ./
+COPY . .
+RUN npm install
 RUN npm run build:prod
 # RUN npm run build
 
@@ -18,7 +17,7 @@ RUN npm run build:prod
 # ------------------------
 # Build Stage 2 (composer)
 # ------------------------
-FROM composer AS apibuild
+FROM composer:1.9 AS apibuild
 
 WORKDIR /app
 
@@ -34,7 +33,7 @@ FROM php:7.3-apache
 
 ENV PROJECT /var/www/html
 
-RUN apt-get update && apt-get install -y sqlite3 php7.3-sqlite
+RUN apt-get update && apt-get install -y sqlite3
 RUN a2enmod rewrite expires
 # RUN docker-php-ext-install pdo_mysql
 
